@@ -3,21 +3,19 @@
     border: 3px solid black;
     margin-top: 30px;
     display: flex;
-    justify-content: center;
     align-items: flex-end;
   }
 
   .value {
-    width: 20px;
-    background-color: cyan;
+    background-color: #00ffff;
     border: 1px solid black;
   }
 
   .switching {
-    background-color: rgb(158, 35, 35);
+    background-color: #9e2323;
   }
 
   .pivot {
-    background-color: rgb(28, 133, 28);
+    background-color: #1c851c;
   }
 }

@@ -21,14 +21,6 @@ const mergeArrays = (a, b, swaps, idx) => {
   // idx er startpunktet (index) til dette segmentet i den orginale listen
   const c = []
 
-  // FANT PROBLEMET:
-  // preIndices og postIndices tilsvarer bare ny posisjon og gammel posisjon
-  // man kan ikke bare swappe den nye og den gamle for å få riktig resultat
-
-  // FORSLAG TIL LØSNING:
-  // ikke endre preIndices og postIndices
-  // heller regne ut hvilke swaps som trengs for å bytte alle verdiene når c er ferdig lagd
-
   let a_idx = 0
   let b_idx = 0
   while (a_idx < a.length && b_idx < b.length) {

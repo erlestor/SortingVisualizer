@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import "./sortingVisualizer.scss"
-import { Grid } from "@material-ui/core"
+import { Grid, Typography } from "@material-ui/core"
 import Menu from "./Menu"
 
 import { bubbleSort } from "./algs/bubbleSort"
@@ -13,16 +13,27 @@ const SortingVisualizer = () => {
   const [values, setValues] = useState([])
   const [algActive, setAlgActive] = useState(false)
   const [sorted, setSorted] = useState(false)
+  const [numberOfValues, setNumberOfValues] = useState(50)
+  const [numberOfSwaps, setNumberOfSwaps] = useState(0)
+  const [executionTime, setExecutionTime] = useState(0)
+
+  const canvasWidth = Math.floor(window.innerWidth - 50)
+  const canvasHeight = Math.floor(window.innerHeight - 250)
+  const cellWidth = Math.floor(canvasWidth / numberOfValues)
 
   useEffect(() => {
     scrambleValues()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numberOfValues, alg])
 
   const scrambleValues = () => {
     if (algActive) return
 
+    setNumberOfSwaps(0)
+    setExecutionTime(0)
+
     const newValues = []
-    for (let i = 0; i < getNumberOfValues(); i++) {
+    for (let i = 0; i < numberOfValues; i++) {
       // 1 - 100 (inkludert begge)
       const randomInt = Math.floor(Math.random() * 100) + 1
       newValues.push(randomInt)
@@ -36,8 +47,22 @@ const SortingVisualizer = () => {
     if (sorted) return
     setAlgActive(true)
 
-    let swaps = getSwapsAndSpeed()[0]
-    let speed_multiplier = getSwapsAndSpeed()[1]
+    const pickAlg = {
+      bubble: [bubbleSort, 1],
+      merge: [mergeSort, 0.4],
+      quick: [quickSort, 0.2],
+    }
+
+    const result = pickAlg[alg]
+
+    const startTime = performance.now()
+    let swaps = result[0](values)
+    const endTime = performance.now()
+    setExecutionTime(endTime - startTime)
+    setNumberOfSwaps(swaps.length)
+
+    let speed_multiplier = result[1]
+
     const newValues = values.slice()
 
     const time_per_action = Math.max(
@@ -48,38 +73,13 @@ const SortingVisualizer = () => {
     for (let n = 0; n < swaps.length; n++) {
       animateSwap(swaps, time_per_action, newValues, n)
     }
+
     setTimeout(() => {
       setAlgActive(false)
     }, time_per_action * ((swaps.length - 1) * 3 + 3))
+
     setValues(newValues)
     setSorted(true)
-  }
-
-  const getSwapsAndSpeed = () => {
-    let speed_multiplier = 1
-    let swaps = []
-
-    switch (alg) {
-      case "bubble":
-        swaps = bubbleSort(values)
-        speed_multiplier *= 1
-        break
-      case "merge":
-        swaps = mergeSort(values)
-        speed_multiplier *= 0.2
-        break
-      case "quick":
-        swaps = quickSort(values)
-        speed_multiplier *= 0.2
-        break
-      case "heap":
-        swaps = heapSort(values)
-        break
-      default:
-        break
-    }
-
-    return [swaps, speed_multiplier]
   }
 
   const changeClass = (indices, className) => {
@@ -124,7 +124,7 @@ const SortingVisualizer = () => {
     values[i] = newVal
 
     // bytter høyde
-    const newHeight = Math.floor((newVal * getCanvasHeight()) / 100)
+    const newHeight = Math.floor((newVal * canvasHeight) / 100)
     document.getElementById(`value-${i}`).style.height = `${newHeight}px`
   }
 
@@ -142,53 +142,57 @@ const SortingVisualizer = () => {
     el2.style.height = h1
   }
 
-  const getCanvasWidth = () => {
-    return Math.floor(window.innerWidth - 50)
-  }
-
-  const getCanvasHeight = () => {
-    return Math.floor(window.innerHeight - 200)
-  }
-
-  const getNumberOfValues = () => {
-    return Math.floor(getCanvasWidth() / 20)
-    // return 2
-  }
-
-  const handleValueClick = (el) => {
-    if (el.className === "value") el.className = "value switching"
-    else if (el.className === "value switching") el.className = "value"
-  }
-
   return (
-    <Grid container id="sorting" direction="column">
+    <Grid container id="sorting" direction="column" alignItems="center">
+      <Typography variant="h4" style={{ textAlign: "center", margin: "10px" }}>
+        Sorting visualizer
+      </Typography>
       <Menu
         sortValues={sortValues}
         scrambleValues={scrambleValues}
         alg={alg}
         setAlg={setAlg}
+        numberOfValues={numberOfValues}
+        setNumberOfValues={setNumberOfValues}
       />
-      <Grid item xs={12} align="center">
-        <div
-          className="container"
-          style={{
-            height: `${getCanvasHeight()}px`,
-            width: `${getCanvasWidth()}px`,
-          }}
-        >
-          {values.map((val, vidx) => {
-            const height = Math.floor((val * getCanvasHeight()) / 100)
-            return (
-              <div
-                id={`value-${vidx}`}
-                className="value"
-                style={{ height: height }}
-                onClick={(e) => handleValueClick(e.target)}
-              />
-            )
-          })}
-        </div>
+      <Grid
+        item
+        xs={12}
+        align="center"
+        className="container"
+        style={{
+          minHeight: `${canvasHeight}px`,
+          width: `${canvasWidth}px`,
+        }}
+      >
+        {values.map((val, vidx) => {
+          const height = Math.floor((val * canvasHeight) / 100)
+          return (
+            <div
+              key={vidx}
+              id={`value-${vidx}`}
+              className="value"
+              style={{ height: height, width: cellWidth }}
+            />
+          )
+        })}
       </Grid>
+      {sorted && (
+        <Grid item>
+          <Typography
+            variant="h5"
+            style={{ textAlign: "center", margin: "10px" }}
+          >
+            Number of swaps: {numberOfSwaps}
+          </Typography>
+          <Typography
+            variant="h5"
+            style={{ textAlign: "center", margin: "10px" }}
+          >
+            Execution time: {executionTime} ms
+          </Typography>
+        </Grid>
+      )}
     </Grid>
   )
 }
